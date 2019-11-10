@@ -112,10 +112,10 @@ void getGIFFilenameByIndex(const char *directoryName, int index, char *pnBuffer)
 	while (File file = dir.openNextFile()) {
 	    String filename = file.name();
 	    if (isAnimationFile(filename)) {
-		index--;
 		filename.toCharArray(pnBuffer, 127);
+        	if (!index) break;
+        	index--;
 	    }
-	    if (!index) break;
 	}
     #else
 	Dir dir = FSO.openDir(directoryName);
