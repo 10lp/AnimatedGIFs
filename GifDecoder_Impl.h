@@ -675,45 +675,36 @@ int GifDecoder<maxGifWidth, maxGifHeight, lzwMaxBits>::parseData() {
     return ERROR_NONE;
 }
 
-#ifdef ESP32
-// SmartMatrix teensylc branch src/ESP32MemDisplay
-#include "ESP32MemDisplay.h"
-#endif
-
-void *mallocordie(const char *varname, uint32_t req) {
-    Serial.print("Malloc ");
-    Serial.print(varname);
-    Serial.print(" in GifDecoder startDecoding. Requested bytes: ");
-    Serial.println(req);
-    void *mem = malloc(req);
-    if (mem) {
-	return mem;
-    } else {
-	Serial.print("FATAL: malloc failed for ");
-	Serial.println(varname);
-        #ifdef ESP32
-	show_esp32_all_mem();
-        #endif
-	while (1);
-    }
-    return NULL;
-}
+// from neomatrix_config.h
+extern void show_free_mem(const char *);
+extern void *mallocordie(const char *varname, uint32_t req, bool psram);
 
 template <int maxGifWidth, int maxGifHeight, int lzwMaxBits>
 int GifDecoder<maxGifWidth, maxGifHeight, lzwMaxBits>::startDecoding(void) {
     if (!stack) {
-	stack =  (uint8_t *)		mallocordie("stack", LZW_SIZTABLE);
-	prefix = (uint16_t *)		mallocordie("prefix", LZW_SIZTABLE*2);
-	suffix = (uint8_t *)		mallocordie("suffix", LZW_SIZTABLE);
-	imageData = (uint8_t *)	mallocordie("imageData", gifsize);
-	imageDataBU = (uint8_t *)	mallocordie("imageDataBU", gifsize);
-	palette = (rgb_24 *)		mallocordie("palette", sizeof(rgb_24)*256);
-	tempBuffer = (char *)		mallocordie("tempBuffer", tempBufferSz);
+	// use PSRAM if available for those bigger buffers.
+	stack =  (uint8_t *)		mallocordie("stack", LZW_SIZTABLE, true);
+	prefix = (uint16_t *)		mallocordie("prefix", LZW_SIZTABLE*2, true);
+	suffix = (uint8_t *)		mallocordie("suffix", LZW_SIZTABLE, true);
+	imageData = (uint8_t *)		mallocordie("imageData", gifsize, true);
+	imageDataBU = (uint8_t *)	mallocordie("imageDataBU", gifsize, true);
+	// skip PSRAM on those, hey are too small to bother
+	palette = (rgb_24 *)		mallocordie("palette", sizeof(rgb_24)*256, false);
+	tempBuffer = (char *)		mallocordie("tempBuffer", tempBufferSz, false); // 260 bytes
 
-        #ifdef ESP32
-	show_esp32_all_mem();
-        #endif
+	// from neomatrix_config.h:
+	show_free_mem();
     }	
+
+    // For 64x64 GIFS on a 64x96 display, PSRAM saves 24KB of real RAM:
+    // after:
+    // Heap/32-bit Memory Available     : 200752 bytes total, 73548 bytes largest free block
+    // 8-bit/malloc/DMA Memory Available: 127204 bytes total, 64624 bytes largest free block
+    // Total PSRAM used: 24576 bytes total, 4169596 PSRAM bytes free
+    // 
+    // before:
+    // Heap/32-bit Memory Available     : 187424 bytes total, 84752 bytes largest free block
+    // 8-bit/malloc/DMA Memory Available: 102672 bytes total, 64624 bytes largest free block
 
     // Initialize variables
     keyFrame = true;
