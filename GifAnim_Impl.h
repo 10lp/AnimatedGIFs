@@ -30,13 +30,8 @@ int fileReadCallback(void) { return file.read(); }
 int fileReadBlockCallback(void * buffer, int numberOfBytes) { return file.read((uint8_t*)buffer, numberOfBytes); }
 #else
 extern File file;
-#include "FilenameFunctions.h"
+#include "FilenameFunctions_Impl.h"
 #endif
-
-void die(const char *mesg) {
-    Serial.println(mesg);
-    delay(100000); // while 1 loop only triggers watchdog on ESP chips
-}
 
 /* template parameters are maxGifWidth, maxGifHeight, lzwMaxBits
  * defined in config.h

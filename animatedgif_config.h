@@ -24,7 +24,7 @@ const int lzwMaxBits = 12;
 
 // Use Neomatrix API (which in turn could be using SmartMatrix driver)?
 // This is defined in main ino that calls sav_loop
-#ifdef NEOMATRIX
+#if defined(NEOMATRIX) ||  defined(ARDUINOONPC)
     // This doesn't work due to variables being redefined. Sigh...
     // instead it's included once from AnimatedGIFs.ino
     //#include "neomatrix_config.h"
@@ -89,6 +89,15 @@ extern int FACTY;
     #include "FFat.h"
     #define FSO FFat
     #define FSOFAT
+    // Do NOT add a trailing slash, or things will fail
+    #if gif_size == 64
+        #define GIF_DIRECTORY "/gifs64"
+    #else
+        #define GIF_DIRECTORY "/gifs"
+    #endif
+#elif defined(ARDUINOONPC)
+    #include <SPIFFS.h>
+    #define FSO SPIFFS
     // Do NOT add a trailing slash, or things will fail
     #if gif_size == 64
         #define GIF_DIRECTORY "/gifs64"
