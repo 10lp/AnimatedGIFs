@@ -11,11 +11,6 @@ File file;
 
 int numberOfFiles;
 
-static void die(const char *mesg) {
-    Serial.println(mesg);
-    delay(100000); // while 1 loop only triggers watchdog on ESP chips
-}
-
 bool fileSeekCallback(unsigned long position) {
     return file.seek(position);
 }
