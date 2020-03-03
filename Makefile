@@ -1,9 +1,9 @@
-img3.ffat: data/gifs64/*
+img3.ffat: data/gifs64/* data/www/*
 	# Get from https://github.com/marcmerlin/esp32_fatfsimage/
 	# noota_3gffat.csv 0x2F0000 is 3008KB
 	fatfsimage img3.ffat 3008 data/
 
-img12.ffat: data/gifs64/*
+img12.ffat: data/gifs64/* data/www/*
 	# Get from https://github.com/marcmerlin/esp32_fatfsimage/
 	# ffat.csv 0xBEF000 is 12220KB
 	fatfsimage img12.ffat 12220 data/

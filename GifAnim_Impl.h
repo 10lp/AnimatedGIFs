@@ -145,7 +145,8 @@ void sav_setup() {
         // Limit Fat support to a single concurrent file to save RAM
 	// 37248 KB are saved by using limiting to 1 file instead of 10
         #ifdef GIFANIM_INCLUDE
-	    if (!FFat.begin(0, "", 1)) die("Fat FS mount failed. Not enough RAM?");
+	    // 1 file for reading files, and one file for the web server
+	    if (!FFat.begin(0, "", 2)) die("Fat FS mount failed. Not enough RAM?");
         #else
 	    // Need 2 file descriptors instead of 1 for file browser
 	    if (!FFat.begin(0, "", 2)) die("Fat FS mount failed. Not enough RAM?");
