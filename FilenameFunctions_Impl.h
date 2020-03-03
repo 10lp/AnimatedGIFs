@@ -38,7 +38,7 @@ int initSdCard(int chipSelectPin) {
 bool isAnimationFile(const char filename []) {
     String filenameString(filename);
 #else
-    bool isAnimationFile(String filenameString) {
+bool isAnimationFile(String filenameString) {
     // ESP32 filename includes the full path, so need to remove the path before looking at the filename
     int pathindex = filenameString.lastIndexOf("/");
     if(pathindex >= 0)
