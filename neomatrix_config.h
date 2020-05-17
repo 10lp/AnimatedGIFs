@@ -48,16 +48,16 @@ to use, set the define before you include the file.
 
 #if defined(ARDUINOONPC)
     #if defined(__ARMEL__)
-	#pragma message "Detected ARDUINOONPC on ARM (guessing rPi), will use FastLED_RPIRGBPanel_GFX"
-	#define RPIRGBPANEL
+        #pragma message "Detected ARDUINOONPC on ARM (guessing rPi), will use FastLED_RPIRGBPanel_GFX"
+        #define RPIRGBPANEL
     #else
-	#ifndef LINUX_RENDERER_SDL
-	    #pragma message "Detected ARDUINOONPC. Using LINUX_RENDERER_X11 FastLED_TFTWrapper_GFX Rendering"
-	    #define LINUX_RENDERER_X11
-	#else
-	    #pragma message "Detected ARDUINOONPC. Using LINUX_RENDERER_SDL FastLED_NeoMatrix Rendering."
-	    #pragma message "Comment out LINUX_RENDERER_SDL for X11 rendering instead of SDL. Use + for brighter."
-	#endif
+        #ifndef LINUX_RENDERER_SDL
+            #pragma message "Detected ARDUINOONPC. Using LINUX_RENDERER_X11 FastLED_TFTWrapper_GFX Rendering"
+            #define LINUX_RENDERER_X11
+        #else
+            #pragma message "Detected ARDUINOONPC. Using LINUX_RENDERER_SDL FastLED_NeoMatrix Rendering."
+            #pragma message "Comment out LINUX_RENDERER_SDL for X11 rendering instead of SDL. Use + for brighter."
+        #endif
     #endif
 #endif
 
@@ -95,6 +95,7 @@ to use, set the define before you include the file.
 
 #include <Adafruit_GFX.h>
 bool init_done = 0;
+uint32_t tft_spi_speed;
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
 
 // The ESP32 FastLED defines below must be defined before FastLED.h is loaded
@@ -118,9 +119,6 @@ bool init_done = 0;
 #include <LEDMatrix.h>
 #endif
 
-uint32_t tft_spi_speed;
-
-
 
 //============================================================================
 // Matrix defines (SMARTMATRIX vs NEOMATRIX and size)
@@ -130,6 +128,7 @@ uint32_t tft_spi_speed;
 //
 #if defined(M24BY24)
     #include <FastLED_NeoMatrix.h>
+    #define FASTLED_NEOMATRIX
     
     const uint8_t MATRIXPIN = 13;
     
@@ -188,6 +187,7 @@ uint32_t tft_spi_speed;
 //----------------------------------------------------------------------------
 #elif defined(M32BY8X3)
     #include <FastLED_NeoMatrix.h>
+    #define FASTLED_NEOMATRIX
     
     uint8_t matrix_brightness = 64;
     // Used by LEDMatrix
@@ -244,6 +244,7 @@ uint32_t tft_spi_speed;
 //----------------------------------------------------------------------------
 #elif defined(M16BY16T4)
     #include <FastLED_NeoMatrix.h>
+    #define FASTLED_NEOMATRIX
     
     uint8_t matrix_brightness = 64;
     
@@ -274,6 +275,7 @@ uint32_t tft_spi_speed;
 //----------------------------------------------------------------------------
 #elif defined(M64BY64) // 64x64 straight connection (no matrices)
     #include <FastLED_NeoMatrix.h>
+    #define FASTLED_NEOMATRIX
     
     // http://marc.merlins.org/perso/arduino/post_2018-07-30_Building-a-64x64-Neopixel-Neomatrix-_4096-pixels_-running-NeoMatrix-FastLED-IR.html
     uint8_t matrix_brightness = 128;
@@ -303,7 +305,7 @@ uint32_t tft_spi_speed;
 //----------------------------------------------------------------------------
 #elif defined(SMARTMATRIX)
     // CHANGEME, see MatrixHardware_ESP32_V0.h in SmartMatrix/src
-    #define GPIOPINOUT 4 // if on ESP32, this selects which wiring is used. Teensy uses the define below
+    #define GPIOPINOUT 8 // if on ESP32, this selects which wiring is used. Teensy uses the define below
     #include <SmartLEDShieldV4.h>  // if you're using SmartLED Shield V4 hardware on teensy
     #include <SmartMatrix3.h>
     #include <SmartMatrix_GFX.h>
@@ -712,9 +714,6 @@ const uint16_t kMatrixHeight = mh;
 extern "C" {
 #include "user_interface.h"
 }
-// min/max are broken by the ESP8266 include
-#define min(a,b) (a<b)?(a):(b)
-#define max(a,b) (a>b)?(a):(b)
 #endif // ESP8266
 
 uint8_t gHue = 0; // rotating "base color" used by many of the patterns
@@ -733,9 +732,9 @@ uint16_t XY( uint8_t x, uint8_t y) {
 }
 
 int wrapX(int x) {
-	if (x < 0 ) return 0;
-	if (x >= MATRIX_WIDTH) return (MATRIX_WIDTH-1);
-	return x;
+    if (x < 0 ) return 0;
+    if (x >= MATRIX_WIDTH) return (MATRIX_WIDTH-1);
+    return x;
 }
 
 void show_free_mem(const char *pre=NULL) {
@@ -759,23 +758,23 @@ void *mallocordie(const char *varname, uint32_t req, bool psram=true) {
     void *mem;
 #ifdef ESP32
     if (psram) { 
-	mem = ps_malloc(req);
+        mem = ps_malloc(req);
     } else {
-	mem = malloc(req);
+        mem = malloc(req);
     }
 #else
     mem = malloc(req);
 #endif
 
     if (mem) {
-	return mem;
+        return mem;
     } else {
-	Serial.print("FATAL: ");
-	if (psram) Serial.print("ps_");
-	Serial.print("malloc failed for ");
-	Serial.println(varname);
-	show_free_mem();
-	while (1); // delay(1);  Adding this seems to cause an ESP32 bug
+        Serial.print("FATAL: ");
+        if (psram) Serial.print("ps_");
+        Serial.print("malloc failed for ");
+        Serial.println(varname);
+        show_free_mem();
+        while (1); // delay(1);  Adding this seems to cause an ESP32 bug
     }
     return NULL;
 }
@@ -783,8 +782,8 @@ void *mallocordie(const char *varname, uint32_t req, bool psram=true) {
 void matrix_setup(int reservemem = 40000) {
     reservemem = reservemem; // squelch compiler warning if var is unused.
     if (init_done) {
-	Serial.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> BUG: matrix_setup called twice");
-	return;
+        Serial.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> BUG: matrix_setup called twice");
+        return;
     }
     init_done = 1;
     // Teensy takes a while to initialize serial port.
@@ -792,7 +791,9 @@ void matrix_setup(int reservemem = 40000) {
     #if defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK64FX512__) || defined(__MK66FX1M0__)
         delay(3000);
     #endif
-    Serial.begin(115200);
+    // It's bad to call Serial.begin twice, so it's disabled here now, make sure you have it enabled
+    // in your calling script.
+    //Serial.begin(115200);
     Serial.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Serial.begin");
     show_free_mem("Memory after setup() starts");
     
@@ -853,25 +854,25 @@ void matrix_setup(int reservemem = 40000) {
         // https://github.com/FastLED/FastLED/wiki/Multiple-Controller-Examples
         FastLED.addLeds<WS2812B,23, GRB>(matrixleds, 0*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
         #ifdef ESP32
-	    FastLED.addLeds<WS2812B,22, GRB>(matrixleds, 1*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP); 
-	    FastLED.addLeds<WS2812B,27, GRB>(matrixleds, 2*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);   // was 3
-	    FastLED.addLeds<WS2812B,21, GRB>(matrixleds, 3*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
-	    FastLED.addLeds<WS2812B,19, GRB>(matrixleds, 4*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
-	    FastLED.addLeds<WS2812B,18, GRB>(matrixleds, 5*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP); 
-	    FastLED.addLeds<WS2812B, 5, GRB>(matrixleds, 6*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP); 
-	    FastLED.addLeds<WS2812B, 4, GRB>(matrixleds, 7*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP); 
+            FastLED.addLeds<WS2812B,22, GRB>(matrixleds, 1*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP); 
+            FastLED.addLeds<WS2812B,27, GRB>(matrixleds, 2*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);   // was 3
+            FastLED.addLeds<WS2812B,21, GRB>(matrixleds, 3*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
+            FastLED.addLeds<WS2812B,19, GRB>(matrixleds, 4*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
+            FastLED.addLeds<WS2812B,18, GRB>(matrixleds, 5*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP); 
+            FastLED.addLeds<WS2812B, 5, GRB>(matrixleds, 6*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP); 
+            FastLED.addLeds<WS2812B, 4, GRB>(matrixleds, 7*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP); 
 
-	    FastLED.addLeds<WS2812B, 0, GRB>(matrixleds, 8*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP); 
-	    FastLED.addLeds<WS2812B, 2, GRB>(matrixleds, 9*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP); 
-	    FastLED.addLeds<WS2812B,15, GRB>(matrixleds,10*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP); 
-	    FastLED.addLeds<WS2812B,25, GRB>(matrixleds,11*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP); 
-	    FastLED.addLeds<WS2812B,26, GRB>(matrixleds,12*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP); 
-	    FastLED.addLeds<WS2812B,14, GRB>(matrixleds,13*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP); 
-	    FastLED.addLeds<WS2812B,12, GRB>(matrixleds,14*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP); 
-	    FastLED.addLeds<WS2812B,13, GRB>(matrixleds,15*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
+            FastLED.addLeds<WS2812B, 0, GRB>(matrixleds, 8*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP); 
+            FastLED.addLeds<WS2812B, 2, GRB>(matrixleds, 9*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP); 
+            FastLED.addLeds<WS2812B,15, GRB>(matrixleds,10*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP); 
+            FastLED.addLeds<WS2812B,25, GRB>(matrixleds,11*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP); 
+            FastLED.addLeds<WS2812B,26, GRB>(matrixleds,12*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP); 
+            FastLED.addLeds<WS2812B,14, GRB>(matrixleds,13*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP); 
+            FastLED.addLeds<WS2812B,12, GRB>(matrixleds,14*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP); 
+            FastLED.addLeds<WS2812B,13, GRB>(matrixleds,15*NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP);
 
-	    Serial.print("Neomatrix 16 pin via RMT/I2S 16 way parallel output, total LEDs: ");
-	    Serial.println(NUMMATRIX);
+            Serial.print("Neomatrix 16 pin via RMT/I2S 16 way parallel output, total LEDs: ");
+            Serial.println(NUMMATRIX);
         #endif // ESP32
         matrix_gamma = 2.4; // higher number is darker, needed for Neomatrix more than SmartMatrix
     
@@ -1083,8 +1084,8 @@ void matrix_setup(int reservemem = 40000) {
     #ifdef HASTFT
         before = millis();
         for (uint8_t i=0; i<3; i++) {
-    	tft->fillScreen(0);
-    	tft->fillScreen(0xFFFF);
+            tft->fillScreen(0);
+            tft->fillScreen(0xFFFF);
         }
         Serial.print("TFT SPI Speed: ");
         Serial.print(tft_spi_speed/1000000);
@@ -1094,18 +1095,18 @@ void matrix_setup(int reservemem = 40000) {
     #if defined(BOARD_HAS_PSRAM) && defined(HASTFT)
         before = millis();
         for (uint8_t i=0; i<5; i++) {
-          matrix->show(1);
+            matrix->show(1);
         }
         Serial.print("Matrix->show() PSRAM BYPASS Speed Test fps: ");
         Serial.println((5* 1000/(millis() - before)));
     #endif
     before = millis();
     for (uint8_t i=0; i<5; i++) {
-    #if defined(BOARD_HAS_PSRAM) && defined(HASTFT)
-          matrix->show(0);
-    #else
-          matrix->show();
-    #endif
+        #if defined(BOARD_HAS_PSRAM) && defined(HASTFT)
+            matrix->show(0);
+        #else
+            matrix->show();
+        #endif
     }
     Serial.print("Matrix->show() Speed Test fps: ");
     Serial.println((5* 1000/(millis() - before)));
@@ -1116,4 +1117,4 @@ void matrix_setup(int reservemem = 40000) {
     while(Serial.available() > 0) { char t = Serial.read(); t = t; }
 }
 #endif // neomatrix_config_h
-//vim:sts=4:sw=4
+// vim:sts=4:sw=4:et
