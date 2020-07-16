@@ -143,12 +143,12 @@ void sav_setup() {
     // SPIFFS Begin (can crash/conflict with IRRemote on ESP32)
     #ifdef FSOFAT
         // Limit Fat support to a single concurrent file to save RAM
-	// 37248 KB are saved by using limiting to 1 file instead of 10
+        // 37248 KB are saved by using limiting to 2 file instead of 10
         #ifdef GIFANIM_INCLUDE
 	    // 1 file for reading files, and one file for the web server
 	    if (!FFat.begin(0, "", 2)) die("Fat FS mount failed. Not enough RAM?");
         #else
-	    // Need 2 file descriptors instead of 1 for file browser
+        // You might need 2 or 3.
 	    if (!FFat.begin(0, "", 2)) die("Fat FS mount failed. Not enough RAM?");
         #endif
 	Serial.println("FatFS Directory listing:");
