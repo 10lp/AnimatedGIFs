@@ -168,7 +168,7 @@ int openGifFilenameByIndex(const char *directoryName, int index) {
     if (file) file.close();
 
     // Attempt to open the file for reading
-    #ifdef ESP8266
+    #ifdef FSOSPIFFS
         if (! (file = SPIFFS.open(pathname, "r")) ) die ("Error opening GIF file");
     #else
         if (! (file = FSO.open(pathname)) ) die ("Error opening GIF file");
