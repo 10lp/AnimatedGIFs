@@ -1,7 +1,5 @@
-#ifdef ARDUINOONPC
-#define UNIXFS
-#else
-#define BASICSPIFFS
+#ifndef ARDUINOONPC
+#define BASICARDUINOFS
 #endif
 // Use NeoMatrix API, even if it may use the SmartMatrix backend depending on the CPU
 #define NEOMATRIX

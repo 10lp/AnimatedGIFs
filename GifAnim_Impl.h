@@ -32,7 +32,7 @@
     unsigned long filePositionCallback(void) { return ftell(file); }
     int fileReadCallback(void) { return getc(file); }
     int fileReadBlockCallback(void * buffer, int numberOfBytes) { return fread(buffer, 1, numberOfBytes, file); }
-#elif BASICSPIFFS
+#elif BASICARDUINOFS
     File file;
     bool fileSeekCallback(unsigned long position) { return file.seek(position); }
     unsigned long filePositionCallback(void) { return file.position(); }
@@ -216,10 +216,10 @@ bool sav_newgif(const char *pathname) {
     if (! (file = fopen(pathname, "r")));
 #else
     if (file) file.close();
-    #ifdef ESP8266
-    file = SPIFFS.open(pathname, "r");
+    #ifdef FSOSPIFFS
+	file = SPIFFS.open(pathname, "r");
     #else
-    file = FSO.open(pathname);
+	file = FFat.open(pathname);
     #endif
 #endif
     if (!file) {

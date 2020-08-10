@@ -9,14 +9,17 @@ int OFFSETY = 0;
 int FACTX = 0;
 int FACTY = 0;
 
-#ifdef ESP8266
-#include <FS.h>
-#else
-#include <SPIFFS.h>
-#endif
-File file;
 
-const char *pathname = "/gifs/concentric_circles.gif";
+#if defined(ARDUINOONPC)
+    //const char *pathname = FS_PREFIX "/gifs128x192/Aki5PC6_Running.gif";
+    const char *pathname = FS_PREFIX "/gifs128x192/abstract_colorful_animation.gif";
+#elif defined(ESP8266)
+    // 32x32 GIFs on 24x32 display, hence offset of -4
+    OFFSETX = -4;
+    const char *pathname = "/gifs/concentric_circles.gif";
+#else
+    const char *pathname = "/gifs64/200_circlesmoke.gif";
+#endif
 
 /* template parameters are maxGifWidth, maxGifHeight, lzwMaxBits
  * 
@@ -26,10 +29,23 @@ const char *pathname = "/gifs/concentric_circles.gif";
  */
 GifDecoder<kMatrixWidth, kMatrixHeight, 12> decoder;
 
-bool fileSeekCallback(unsigned long position) { return file.seek(position); }
-unsigned long filePositionCallback(void) { return file.position(); }
-int fileReadCallback(void) { return file.read(); }
-int fileReadBlockCallback(void * buffer, int numberOfBytes) { return file.read((uint8_t*)buffer, numberOfBytes); }
+#ifdef UNIXFS
+    // https://www.programiz.com/c-programming/c-file-input-output
+    // https://www.gnu.org/software/libc/manual/html_node/I_002fO-on-Streams.html
+    #include <stdio.h>
+    #include <stdlib.h>
+    FILE *file;
+    bool fileSeekCallback(unsigned long position) { return (fseek(file, position, SEEK_SET) != -1); }
+    unsigned long filePositionCallback(void) { return ftell(file); }
+    int fileReadCallback(void) { return getc(file); }
+    int fileReadBlockCallback(void * buffer, int numberOfBytes) { return fread(buffer, 1, numberOfBytes, file); }
+#else
+    File file;
+    bool fileSeekCallback(unsigned long position) { return file.seek(position); }
+    unsigned long filePositionCallback(void) { return file.position(); }
+    int fileReadCallback(void) { return file.read(); }
+    int fileReadBlockCallback(void * buffer, int numberOfBytes) { return file.read((uint8_t*)buffer, numberOfBytes); }
+#endif
 
 void screenClearCallback(void) { matrix->clear(); }
 void updateScreenCallback(void) { matrix->show(); }
@@ -59,13 +75,24 @@ void setup() {
     Serial.println("Starting AnimatedGIFs Sketch");
     matrix_setup();
 
-    SPIFFS.begin();
-    file = SPIFFS.open(pathname, "r");
+    Serial.print(pathname);
+
+#ifdef ARDUINOONPC
+    if (file) fclose(file);
+    if (! (file = fopen(pathname, "r")));
+#else
+    if (file) file.close();
+    #ifdef FSOSPIFFS
+	file = SPIFFS.open(pathname, "r");
+    #else
+	file = FFat.open(pathname);
+    #endif
+#endif
     if (!file) {
-        Serial.print("Error opening GIF file ");
-        Serial.println(pathname);
+        Serial.println(": Error opening GIF file");
 	while (1) { delay(1000); }; // while 1 loop only triggers watchdog on ESP chips
     }
+    Serial.println(": Opened GIF file, start decoding");
     decoder.startDecoding();
 }
 

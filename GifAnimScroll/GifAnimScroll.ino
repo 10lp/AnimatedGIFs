@@ -1,4 +1,4 @@
-#define BASICSPIFFS
+#define BASICARDUINOFS
 // Use NeoMatrix API, even if it may use the SmartMatrix backend depending on the CPU
 #define NEOMATRIX
 #include "GifAnim_Impl.h"
