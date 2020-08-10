@@ -1,4 +1,8 @@
+#ifdef ARDUINOONPC
+#define UNIXFS
+#else
 #define BASICSPIFFS
+#endif
 // Use NeoMatrix API, even if it may use the SmartMatrix backend depending on the CPU
 #define NEOMATRIX
 #include "GifAnim_Impl.h"
@@ -12,15 +16,19 @@ int FACTX = 0;
 int FACTY = 0;
 
 
-const char *pathname = "/gifs64/200_circlesmoke.gif";
 
 // Setup method runs once, when the sketch starts
 void setup() {
-#ifdef ESP8266
-    // 32x32 GIFs on 24x32 display, hence offset of -4
-    OFFSETX = -4;
-    char *pathname = "/gifs/concentric_circles.gif";
-#endif
+    #if defined(ARDUINOONPC)
+	//const char *pathname = FS_PREFIX "/gifs128x192/Aki5PC6_Running.gif";
+	const char *pathname = FS_PREFIX "/gifs128x192/abstract_colorful_animation.gif";
+    #elif defined(ESP8266)
+	// 32x32 GIFs on 24x32 display, hence offset of -4
+	OFFSETX = -4;
+	const char *pathname = "/gifs/concentric_circles.gif";
+    #else
+	const char *pathname = "/gifs64/200_circlesmoke.gif";
+    #endif
     sav_setup();
     if (sav_newgif(pathname)) delay(100000); // while 1 loop only triggers watchdog on ESP chips
 }

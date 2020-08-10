@@ -22,21 +22,35 @@
 #include "GifDecoder.h"
 
 // Used by SimpleGifAnimViewer2 to work without FilenameFunctions*
-#ifdef BASICSPIFFS
-File file;
-bool fileSeekCallback(unsigned long position) { return file.seek(position); }
-unsigned long filePositionCallback(void) { return file.position(); }
-int fileReadCallback(void) { return file.read(); }
-int fileReadBlockCallback(void * buffer, int numberOfBytes) { return file.read((uint8_t*)buffer, numberOfBytes); }
+#ifdef UNIXFS
+    // https://www.programiz.com/c-programming/c-file-input-output
+    // https://www.gnu.org/software/libc/manual/html_node/I_002fO-on-Streams.html
+    #include <stdio.h>
+    #include <stdlib.h>
+    FILE *file;
+    bool fileSeekCallback(unsigned long position) { return (fseek(file, position, SEEK_SET) != -1); }
+    unsigned long filePositionCallback(void) { return ftell(file); }
+    int fileReadCallback(void) { return getc(file); }
+    int fileReadBlockCallback(void * buffer, int numberOfBytes) { return fread(buffer, 1, numberOfBytes, file); }
+#elif BASICSPIFFS
+    File file;
+    bool fileSeekCallback(unsigned long position) { return file.seek(position); }
+    unsigned long filePositionCallback(void) { return file.position(); }
+    int fileReadCallback(void) { return file.read(); }
+    int fileReadBlockCallback(void * buffer, int numberOfBytes) { return file.read((uint8_t*)buffer, numberOfBytes); }
 #else
-extern File file;
-#include "FilenameFunctions_Impl.h"
+    extern File file;
+    #include "FilenameFunctions_Impl.h"
 #endif
 
 /* template parameters are maxGifWidth, maxGifHeight, lzwMaxBits
  * defined in config.h
  */
+#ifdef ARDUINOONPC
+GifDecoder<128, 192, lzwMaxBits> decoder;
+#else
 GifDecoder<gif_size, gif_size, lzwMaxBits> decoder;
+#endif
 
 void screenClearCallback(void) {
 #ifdef NEOMATRIX
@@ -139,7 +153,8 @@ void sav_setup() {
     #endif // NEOMATRIX
 #endif // GIFANIM_INCLUDE
 
-#ifndef FSOSD
+#ifdef ARDUINOONPC
+#elif !defined(FSOSD)
     // SPIFFS Begin (can crash/conflict with IRRemote on ESP32)
     #ifdef FSOFAT
         // Limit Fat support to a single concurrent file to save RAM
@@ -194,13 +209,19 @@ void sav_setup() {
 }
 
 bool sav_newgif(const char *pathname) {
-    if (file) file.close();
     Serial.print(pathname);
+
+#ifdef ARDUINOONPC
+    if (file) fclose(file);
+    if (! (file = fopen(pathname, "r")));
+#else
+    if (file) file.close();
     #ifdef ESP8266
     file = SPIFFS.open(pathname, "r");
     #else
     file = FSO.open(pathname);
     #endif
+#endif
     if (!file) {
         Serial.println(": Error opening GIF file");
 	return 1;
