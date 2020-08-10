@@ -140,18 +140,20 @@ uint32_t tft_spi_speed;
 // ESP32: https://github.com/me-no-dev/arduino-esp32fs-plugin
 // https://github.com/marcmerlin/esp32_fatfsimage/blob/master/README.md
 #if defined(ESP8266)
+    #define FS_PREFIX ""
     #include <FS.h>
     #define FSO SPIFFS
     #define FSOSPIFFS
     #if gif_size == 64
-        #define GIF_DIRECTORY "/gifs64/"
+        #define GIF_DIRECTORY FS_PREFIX "/gifs64/"
     #else
-        #define GIF_DIRECTORY "/gifs/"
+        #define GIF_DIRECTORY FS_PREFIX "/gifs/"
     #endif
     extern "C" {
         #include "user_interface.h"
     }
 #elif defined(ESP32)
+    #define FS_PREFIX ""
     //#include <SPIFFS.h>
     //#define FSO SPIFFS
     #include "FFat.h"
@@ -159,26 +161,19 @@ uint32_t tft_spi_speed;
     #define FSOFAT
     // Do NOT add a trailing slash, or things will fail
     #if gif_size == 64
-        #define GIF_DIRECTORY "/gifs64"
+        #define GIF_DIRECTORY FS_PREFIX "/gifs64"
     #else
-        #define GIF_DIRECTORY "/gifs"
+        #define GIF_DIRECTORY FS_PREFIX "/gifs"
     #endif
 #elif defined(ARDUINOONPC)
-    #include <SPIFFS.h>
-    #define FSO SPIFFS
-    // Do NOT add a trailing slash, or things will fail
-    #if gif_size == 64
-        #define GIF_DIRECTORY "/gifs64"
-    #else
-        #define GIF_DIRECTORY "/gifs"
-    #endif
+    #define UNIXFS
+    #define FS_PREFIX "/root/NM/"
 #else
+    #define FS_PREFIX ""
     #define FSO SD
     #define FSOSD
     #if defined (ARDUINO)
     #include <SD.h>
-    #elif defined (SPARK)
-    #include "sd-card-library-photon-compat/sd-card-library-photon-compat.h"
     #endif
     // Chip select for SD card on the SmartMatrix Shield or Photon
     // Teensy 3.5/3.6
@@ -193,20 +188,11 @@ uint32_t tft_spi_speed;
         #define SD_CS SS
     #endif
     
-    #if defined(ESP32)
-        // ESP32 SD Library can't handle a trailing slash in the directory name
-        #if gif_size == 64
-            #define GIF_DIRECTORY "/gifs64"
-        #else
-            #define GIF_DIRECTORY "/gifs"
-        #endif
+    // Teensy SD Library requires a trailing slash in the directory name
+    #if gif_size == 64
+        #define GIF_DIRECTORY FS_PREFIX "/gifs64/"
     #else
-        // Teensy SD Library requires a trailing slash in the directory name
-        #if gif_size == 64
-            #define GIF_DIRECTORY "/gifs64/"
-        #else
-            #define GIF_DIRECTORY "/gifs/"
-        #endif
+        #define GIF_DIRECTORY FS_PREFIX "/gifs/"
     #endif
 #endif
 
@@ -729,7 +715,7 @@ uint32_t tft_spi_speed;
 	const uint16_t MATRIX_TILE_WIDTH =  64; // width of EACH NEOPIXEL MATRIX (not total display)
 	const uint16_t MATRIX_TILE_HEIGHT=   1; // height of each matrix
     #else
-	const uint16_t MATRIX_TILE_WIDTH = 384; // width of EACH NEOPIXEL MATRIX (not total display)
+	const uint16_t MATRIX_TILE_WIDTH = 128; // width of EACH NEOPIXEL MATRIX (not total display)
 	const uint16_t MATRIX_TILE_HEIGHT= 192; // height of each matrix
     #endif
     const uint8_t MATRIX_TILE_H     = 1;  // number of matrices arranged horizontally
@@ -846,8 +832,7 @@ void show_free_mem(const char *pre=NULL) {
 
 void die(const char *mesg) {
     Serial.println(mesg);
-    while(1) delay((int32_t)1); // while 1 loop only triggers watchdog on ESP chips
-    
+    while(1) delay((uint32_t)1); // while 1 loop only triggers watchdog on ESP chips
 }
 
 void *mallocordie(const char *varname, uint32_t req, bool psram=true) {
@@ -883,8 +868,13 @@ void *mallocordie(const char *varname, uint32_t req, bool psram=true) {
     return NULL;
 }
 
-void matrix_setup(int reservemem = 40000) {
+void matrix_setup(bool initserial=true, int reservemem = 40000) {
     reservemem = reservemem; // squelch compiler warning if var is unused.
+    // It's bad to call Serial.begin twice, so it's disabled here now, make sure you have it enabled
+    // in your calling script.
+    Serial.begin(115200);
+    Serial.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Serial.begin");
+
     if (init_done) {
         Serial.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> BUG: matrix_setup called twice");
         return;
@@ -895,10 +885,6 @@ void matrix_setup(int reservemem = 40000) {
     #if defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK64FX512__) || defined(__MK66FX1M0__)
         delay(3000);
     #endif
-    // It's bad to call Serial.begin twice, so it's disabled here now, make sure you have it enabled
-    // in your calling script.
-    //Serial.begin(115200);
-    Serial.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Serial.begin");
     show_free_mem("Memory after setup() starts");
     
     // Smartmatrix defines the framebuffers itself. Other methods make their own allocation here  
@@ -1031,7 +1017,7 @@ void matrix_setup(int reservemem = 40000) {
             defaults.cols = 128;
             defaults.chain_length = 4;
             defaults.parallel = 3;
-            defaults.pwm_lsb_nanoseconds = 50;
+            defaults.pwm_lsb_nanoseconds = 100;
             defaults.pwm_bits = 7;
             defaults.led_rgb_sequence = "RBG";
             defaults.panel_type = "FM6126A";
