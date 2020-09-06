@@ -32,7 +32,7 @@
     unsigned long filePositionCallback(void) { return ftell(file); }
     int fileReadCallback(void) { return getc(file); }
     int fileReadBlockCallback(void * buffer, int numberOfBytes) { return fread(buffer, 1, numberOfBytes, file); }
-#elif BASICARDUINOFS
+#elif defined(BASICARDUINOFS)
     File file;
     bool fileSeekCallback(unsigned long position) { return file.seek(position); }
     unsigned long filePositionCallback(void) { return file.position(); }
@@ -46,11 +46,7 @@
 /* template parameters are maxGifWidth, maxGifHeight, lzwMaxBits
  * defined in config.h
  */
-#ifdef ARDUINOONPC
-GifDecoder<128, 192, lzwMaxBits> decoder;
-#else
 GifDecoder<gif_size, gif_size, lzwMaxBits> decoder;
-#endif
 
 void screenClearCallback(void) {
 #ifdef NEOMATRIX
@@ -206,6 +202,10 @@ void sav_setup() {
 	die("No SD card");
     }
 #endif
+    Serial.print("GifAnim Viewer enabled, lzwMaxBits: ");
+    Serial.print(lzwMaxBits);
+    Serial.print(", gif_size: ");
+    Serial.println(gif_size);
 }
 
 bool sav_newgif(const char *pathname) {
@@ -213,7 +213,7 @@ bool sav_newgif(const char *pathname) {
 
 #ifdef ARDUINOONPC
     if (file) fclose(file);
-    if (! (file = fopen(pathname, "r")));
+    file = fopen(pathname, "r");
 #else
     if (file) file.close();
     #ifdef FSOSPIFFS
@@ -226,7 +226,15 @@ bool sav_newgif(const char *pathname) {
         Serial.println(": Error opening GIF file");
 	return 1;
     }
-    Serial.println(": Opened GIF file, start decoding");
+    Serial.print(": Opened GIF file, start decoding (OFFSETX: ");
+    Serial.print(OFFSETX);
+    Serial.print(", OFFSETY: ");
+    Serial.print(OFFSETY);
+    Serial.print("FACTX, : ");
+    Serial.print(FACTX);
+    Serial.print(", FACTY: ");
+    Serial.print(FACTY);
+    Serial.println(")");
     decoder.startDecoding();
     return 0;
 }
