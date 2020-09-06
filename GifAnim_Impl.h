@@ -230,7 +230,7 @@ bool sav_newgif(const char *pathname) {
     Serial.print(OFFSETX);
     Serial.print(", OFFSETY: ");
     Serial.print(OFFSETY);
-    Serial.print("FACTX, : ");
+    Serial.print(", FACTX: ");
     Serial.print(FACTX);
     Serial.print(", FACTY: ");
     Serial.print(FACTY);
