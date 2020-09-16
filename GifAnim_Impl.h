@@ -27,11 +27,63 @@
     // https://www.gnu.org/software/libc/manual/html_node/I_002fO-on-Streams.html
     #include <stdio.h>
     #include <stdlib.h>
+    #include <dirent.h>
     FILE *file;
     bool fileSeekCallback(unsigned long position) { return (fseek(file, position, SEEK_SET) != -1); }
     unsigned long filePositionCallback(void) { return ftell(file); }
     int fileReadCallback(void) { return getc(file); }
     int fileReadBlockCallback(void * buffer, int numberOfBytes) { return fread(buffer, 1, numberOfBytes, file); }
+
+    int enumerateGIFFiles(const char *directoryName, boolean displayFilenames) {
+	int numberOfFiles = 0;
+	Serial.print("Enumerate files in dir ");
+	Serial.println(directoryName);
+	DIR *d;
+	struct dirent *dir;
+	if (! (d = opendir(directoryName))) return 0;
+	while ((dir = readdir(d)) != NULL) {
+	    if (dir->d_name[0] == '.') continue;
+	    if (!strstr(dir->d_name, ".gif")) continue;
+	    if (displayFilenames) { Serial.print(numberOfFiles); Serial.print(" : "); Serial.println(dir->d_name); }
+	    numberOfFiles++;
+	}
+	closedir(d);
+	return numberOfFiles;
+    }
+
+    // Get the full path/filename of the GIF file with specified index
+    // This doesn't check if the files are gifs like the arduino version
+    void getGIFFilenameByIndex(const char *directoryName, int index, char *pnBuffer) {
+	DIR *d;
+	struct dirent *dir;
+	if (! (d = opendir(directoryName))) return;
+	dir = readdir(d);
+	while (dir && (index >= 0)) {
+	    // Serial.print("Check file "); Serial.println(dir->d_name);
+	    // this doesn't check where in the string, but good enough
+	    if (!(dir->d_name[0] == '.') && strstr(dir->d_name, ".gif")) {
+		index--;
+		// Serial.print("index "); Serial.println(index);
+		// buffer overflow, directory+file size is on you.
+		strcpy(pnBuffer, directoryName);
+		strcat(pnBuffer, "/");
+		strcat(pnBuffer, dir->d_name);
+	    }
+	    dir = readdir(d);
+	}
+	Serial.print("Selected file ");
+	Serial.println(pnBuffer);
+    }
+
+    int openGifFilenameByIndex(const char *directoryName, int index) {
+	char pathname[2048];
+	getGIFFilenameByIndex(directoryName, index, pathname);
+	if (file) fclose(file);
+	file = fopen(pathname, "r");
+	return 0;
+    }
+
+
 #elif defined(BASICARDUINOFS)
     File file;
     bool fileSeekCallback(unsigned long position) { return file.seek(position); }

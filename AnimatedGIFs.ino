@@ -135,7 +135,6 @@ void setup() {
     }
     Serial.print("Index of files: 0 to ");
     Serial.println(num_files);
-    Serial.flush();
     // At least on teensy, due to some framework bug it seems, early
     // serial output gets looped back into serial input
     // Hence, flush input.
@@ -240,6 +239,9 @@ void loop() {
     }
 
     if (new_file) { 
+	#ifdef NEOMATRIX
+	matrix->clear();
+	#endif
 	frame = 0;
 	new_file = 0;
 	lastTime = millis();
