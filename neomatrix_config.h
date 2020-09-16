@@ -97,6 +97,14 @@ bool init_done = 0;
 uint32_t tft_spi_speed;
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
 
+// min/max are complicated. Arduino and ESP32 layers try to be helpful by using
+// templates that take specific kinds of arguments, but those do not always work
+// with mixed types:
+// error: no matching function for call to 'max(byte&, int16_t&)'
+// These defines get around this problem.
+#define mmin(a,b) ((a<b)?(a):(b))
+#define mmax(a,b) ((a>b)?(a):(b))
+
 // The ESP32 FastLED defines below must be defined before FastLED.h is loaded
 // They are not relevant if you don't actually use FastLED pixel output but cause
 // no harm if we only include FastLED for its CRGB struct.
@@ -715,6 +723,8 @@ uint32_t tft_spi_speed;
 	const uint16_t MATRIX_TILE_WIDTH =  64; // width of EACH NEOPIXEL MATRIX (not total display)
 	const uint16_t MATRIX_TILE_HEIGHT=   1; // height of each matrix
     #else
+        #undef gif_size
+        #define gif_size 192
 	const uint16_t MATRIX_TILE_WIDTH = 128; // width of EACH NEOPIXEL MATRIX (not total display)
 	const uint16_t MATRIX_TILE_HEIGHT= 192; // height of each matrix
     #endif
@@ -745,6 +755,8 @@ uint32_t tft_spi_speed;
     #define min(a,b) ((a<b)?(a):(b))
     #define max(a,b) ((a>b)?(a):(b))
     #include <led-matrix.h>
+    #undef gif_size
+    #define gif_size 192
     
     uint8_t matrix_brightness = 255;
     #ifdef RPI4
@@ -816,7 +828,12 @@ int XY2( int x, int y, bool wrap=false) {
     return matrix->XY(x,MATRIX_HEIGHT-1-y);
 }
 
+// FastLED::colorutils needs a signature with uint8_t
 uint16_t XY( uint8_t x, uint8_t y) {
+    return matrix->XY(x,y);
+}
+// but x/y can be bigger than 256
+uint16_t XY16( uint16_t x, uint16_t y) {
     return matrix->XY(x,y);
 }
 
@@ -870,16 +887,20 @@ void *mallocordie(const char *varname, uint32_t req, bool psram=true) {
 
 void matrix_setup(bool initserial=true, int reservemem = 40000) {
     reservemem = reservemem; // squelch compiler warning if var is unused.
-    // It's bad to call Serial.begin twice, so it's disabled here now, make sure you have it enabled
-    // in your calling script.
-    Serial.begin(115200);
-    Serial.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Serial.begin");
 
     if (init_done) {
         Serial.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> BUG: matrix_setup called twice");
         return;
     }
     init_done = 1;
+
+    // It's bad to call Serial.begin twice, if your calling script runs it first, make sure
+    // you request that it isn't called a 2nd time here.
+    if (initserial) {
+        Serial.begin(115200);
+        Serial.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Serial.begin");
+    }
+
     // Teensy takes a while to initialize serial port.
     // Teensy 3.0, 3.1/3.2, 3.5, 3.6
     #if defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK64FX512__) || defined(__MK66FX1M0__)
