@@ -18,8 +18,7 @@ int FACTY = 0;
 // Setup method runs once, when the sketch starts
 void setup() {
     #if defined(ARDUINOONPC)
-	//const char *pathname = FS_PREFIX "/gifs128x192/Aki5PC6_Running.gif";
-	const char *pathname = FS_PREFIX "/gifs128x192/abstract_colorful_animation.gif";
+	const char *pathname = FS_PREFIX "/gifs128x192/abstract_colorful.gif";
     #elif defined(ESP8266)
 	// 32x32 GIFs on 24x32 display, hence offset of -4
 	OFFSETX = -4;

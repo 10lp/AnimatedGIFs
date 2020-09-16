@@ -12,7 +12,7 @@ int FACTY = 0;
 
 #if defined(ARDUINOONPC)
     //const char *pathname = FS_PREFIX "/gifs128x192/Aki5PC6_Running.gif";
-    const char *pathname = FS_PREFIX "/gifs128x192/abstract_colorful_animation.gif";
+    const char *pathname = FS_PREFIX "/gifs128x192/abstract_colorful.gif";
 #elif defined(ESP8266)
     // 32x32 GIFs on 24x32 display, hence offset of -4
     OFFSETX = -4;
@@ -79,7 +79,7 @@ void setup() {
 
 #ifdef ARDUINOONPC
     if (file) fclose(file);
-    if (! (file = fopen(pathname, "r")));
+    file = fopen(pathname, "r");
 #else
     if (file) file.close();
     #ifdef FSOSPIFFS
