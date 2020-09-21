@@ -141,19 +141,20 @@ void drawPixelCallback(int16_t x, int16_t y, uint8_t red, uint8_t green, uint8_t
 #endif
 #ifdef NEOMATRIX
   CRGB color = CRGB(red, green, blue);
-  if (FACTX == 15 && FACTY == 15) {
-      matrix->drawPixel(x*1.5+0.5+OFFSETX, y*1.5+0.5+OFFSETY, color);
-      if (x % 2 == 0) matrix->drawPixel(x*1.5+1.5+OFFSETX, y*1.5+0.5+OFFSETY, color);
-      if (y % 2 == 0) matrix->drawPixel(x*1.5+0.5+OFFSETX, y*1.5+1.5+OFFSETY, color);
-      if (x % 2 == 0 && y % 2 == 0) matrix->drawPixel(x*1.5+1.5+OFFSETX, y*1.5+1.5+OFFSETY, color);
-  } else if (FACTY == 15) {
-      matrix->drawPixel(x+OFFSETX, y*1.5+0.5+OFFSETY, color);
-      if (y % 2 == 0) matrix->drawPixel(x+OFFSETX, y*1.5+1.5+OFFSETY, color);
-  } else if (FACTX == 15) {
-      matrix->drawPixel(x*1.5+0.5+OFFSETX, y+OFFSETY, color);
-      if (x % 2 == 0) matrix->drawPixel(x*1.5+1.5+OFFSETX, y+OFFSETY, color);
-  } else {
-      matrix->drawPixel(x*FACTX/10+OFFSETX, y*FACTY/10+OFFSETY, color);
+
+  uint16_t basex = x*FACTX/10+OFFSETX;
+  uint16_t basey = y*FACTY/10+OFFSETY;
+
+  matrix->drawPixel(basex, basey, color);
+
+  if (FACTX > 10 && FACTY > 10) {
+      matrix->drawPixel(basex+1, basey,   color);
+      matrix->drawPixel(basex,   basey+1, color);
+      matrix->drawPixel(basex+1, basey+1, color);
+  } else if (FACTY > 10) {
+      matrix->drawPixel(basex,   basey+1, color);
+  } else if (FACTX > 10) {
+      matrix->drawPixel(basex+1, basey,   color);
   }
 #else
   backgroundLayer.drawPixel(x, y, {red, green, blue});

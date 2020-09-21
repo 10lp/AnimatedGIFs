@@ -255,7 +255,8 @@ void loop() {
 	    case  8: factx_now =  7; break;
 	    case  7: factx_now =  6; break;
 	    case  6: factx_now = 15; break;
-	    case 15: factx_now = 10; break;
+	    case 15: factx_now = 12; break;
+	    case 12: factx_now = 10; break;
 	}
 	Serial.println(factx_now);
 	gifname_offset_ratio();
@@ -269,7 +270,8 @@ void loop() {
 	    case  7: factx_now =  8; break;
 	    case  6: factx_now =  7; break;
 	    case 15: factx_now =  6; break;
-	    case 10: factx_now = 15; break;
+	    case 12: factx_now = 15; break;
+	    case 10: factx_now = 12; break;
 	}
 	Serial.println(factx_now);
 	gifname_offset_ratio();
@@ -283,7 +285,8 @@ void loop() {
 	    case  8: facty_now =  7; break;
 	    case  7: facty_now =  6; break;
 	    case  6: facty_now = 15; break;
-	    case 15: facty_now = 10; break;
+	    case 15: facty_now = 12; break;
+	    case 12: facty_now = 10; break;
 	}
 	Serial.println(facty_now);
 	gifname_offset_ratio();
@@ -297,7 +300,8 @@ void loop() {
 	    case  7: facty_now =  8; break;
 	    case  6: facty_now =  7; break;
 	    case 15: facty_now =  6; break;
-	    case 10: facty_now = 15; break;
+	    case 12: facty_now = 15; break;
+	    case 10: facty_now = 12; break;
 	}
 	Serial.println(facty_now);
 	gifname_offset_ratio();
