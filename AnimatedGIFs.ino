@@ -71,13 +71,33 @@
 
 #define NEOMATRIX
 #include "GifAnim_Impl.h"
+// openGifFilenameByIndex computes this for us, steal the value back
+// without changing the calling interface which did not contain returning
+// the pathname.
+extern char pathname[];
 
 // If the matrix is a different size than the GIFs, allow panning through the GIF
 // while displaying it, or bouncing it around if it's smaller than the display
-int OFFSETX = 0;
-int OFFSETY = 0;
-int FACTX = 0;
-int FACTY = 0;
+int offsetx_default;
+int offsety_default;
+// If the display is not square but the gifs are close to square, allow stretching
+// the gif in the X and/or Y direction (10 for 1X, 15 for 1.5X)
+int factx_default;
+int facty_default;
+
+// GifAnim_Impl uses these globals for each frame displays
+// These default to the _default value for each new gif.
+int OFFSETX;
+int OFFSETY;
+int FACTX;
+int FACTY;
+
+// player allows changing offsets and size for each gif after it started playing.
+int offsetx_now;
+int offsety_now;
+int factx_now;
+int facty_now;
+
 
 int num_files;
 
@@ -87,13 +107,28 @@ void setup() {
 #ifdef KINETISK
     delay(6000);
 #endif
-#ifdef ESP8266
-    // 32x32 GIFs on 24x32 display, hence offset of -4
-    OFFSETX = -4;
-    OFFSETY = 0;
-#endif
+
+    
+    // If the matrix is a different size than the GIFs, allow panning through the GIF
+    // while displaying it, or bouncing it around if it's smaller than the display
+    offsetx_default = 0;
+    offsety_default = 0;
+    // If the display is not square but the gifs are close to square, allow stretching
+    // the gif in the X and/or Y direction (10 for 1X, 15 for 1.5X)
+    factx_default   = 10;
+    facty_default   = 10;
+
+    if (kMatrixWidth == 24 && kMatrixHeight == 32) offsetx_default = -4;
+
+
     Serial.println("Starting AnimatedGIFs Sketch");
     sav_setup();
+
+    // GifAnim_Impl uses these globals for each frame displays
+    OFFSETX = offsetx_default;
+    OFFSETY = offsety_default;
+    FACTX   = factx_default;
+    FACTY   = facty_default; 
 
     // Seed the random number generator
     // This breaks SmartMatrix output on ESP32
@@ -152,6 +187,20 @@ void adjust_gamma(float change) {
 #endif
 }
 
+void gifname_offset_ratio() {
+    screenClearCallback();
+    Serial.print(pathname);
+    Serial.print(" : FactX: ");
+    Serial.print(factx_now);
+    Serial.print(", FactY: ");
+    Serial.print(facty_now);
+    Serial.print(", OffsetX: ");
+    Serial.print(offsetx_now);
+    Serial.print(", OffsetY: ");
+    Serial.print(offsety_now);
+    Serial.println("");
+}
+
 void loop() {
     static unsigned long lastTime = millis();
     static int index = FIRSTINDEX;
@@ -198,6 +247,93 @@ void loop() {
 	Serial.println(clear);
 	break;
 
+    case 'x':
+	Serial.print("Toggle horizontal zoom down: ");
+	switch (factx_now) {
+	    case 10: factx_now =  9; break;
+	    case  9: factx_now =  8; break;
+	    case  8: factx_now =  7; break;
+	    case  7: factx_now =  6; break;
+	    case  6: factx_now = 15; break;
+	    case 15: factx_now = 10; break;
+	}
+	Serial.println(factx_now);
+	gifname_offset_ratio();
+	break;
+
+    case 'X':
+	Serial.print("Toggle horizontal zoom up: ");
+	switch (factx_now) {
+	    case  9: factx_now = 10; break;
+	    case  8: factx_now =  9; break;
+	    case  7: factx_now =  8; break;
+	    case  6: factx_now =  7; break;
+	    case 15: factx_now =  6; break;
+	    case 10: factx_now = 15; break;
+	}
+	Serial.println(factx_now);
+	gifname_offset_ratio();
+	break;
+
+    case 'y':
+	Serial.print("Toggle vertical zoom down: ");
+	switch (facty_now) {
+	    case 10: facty_now =  9; break;
+	    case  9: facty_now =  8; break;
+	    case  8: facty_now =  7; break;
+	    case  7: facty_now =  6; break;
+	    case  6: facty_now = 15; break;
+	    case 15: facty_now = 10; break;
+	}
+	Serial.println(facty_now);
+	gifname_offset_ratio();
+	break;
+
+    case 'Y':
+	Serial.print("Toggle vertical zoom up: ");
+	switch (facty_now) {
+	    case  9: facty_now = 10; break;
+	    case  8: facty_now =  9; break;
+	    case  7: facty_now =  8; break;
+	    case  6: facty_now =  7; break;
+	    case 15: facty_now =  6; break;
+	    case 10: facty_now = 15; break;
+	}
+	Serial.println(facty_now);
+	gifname_offset_ratio();
+	break;
+
+
+    case 'h':
+	Serial.print("shift -4 horizontally: ");
+	offsetx_now -= 4;
+	Serial.println(offsetx_now);
+	gifname_offset_ratio();
+	break;
+
+    case 'H':
+    case 'j':
+	Serial.print("shift +4 horizontally: ");
+	offsetx_now += 4;
+	Serial.println(offsetx_now);
+	gifname_offset_ratio();
+	break;
+
+    case 'v':
+	Serial.print("shift -4 vertically:: ");
+	offsety_now -= 4;
+	Serial.println(offsety_now);
+	gifname_offset_ratio();
+	break;
+
+    case 'V':
+    case 'b':
+	Serial.print("shift +4 vertically:: ");
+	offsety_now += 4;
+	Serial.println(offsety_now);
+	gifname_offset_ratio();
+	break;
+
     case '+': adjust_gamma(+0.2); break;
 
     case '-': adjust_gamma(-0.2); break;
@@ -207,6 +343,10 @@ void loop() {
 	longer = longer?0:3600;
 	Serial.print("Image display time: "); 
 	Serial.println(longer + DISPLAY_TIME_SECONDS); 
+	break;
+
+    case '\n':
+    case '\r':
 	break;
 
     default:
@@ -223,7 +363,7 @@ void loop() {
 		Serial.println(new_file);
 		index = new_file;
 	    } else {
-		Serial.print("Got serial char ");
+		Serial.print("Got unhandled serial char ");
 		Serial.println(readchar);
 	    }
 	}
@@ -239,9 +379,12 @@ void loop() {
     }
 
     if (new_file) { 
-	#ifdef NEOMATRIX
-	matrix->clear();
-	#endif
+	screenClearCallback();
+	offsetx_now = offsetx_default;
+	offsety_now = offsety_default;
+	factx_now   = factx_default;
+	facty_now   = facty_default; 
+
 	frame = 0;
 	new_file = 0;
 	lastTime = millis();
@@ -251,9 +394,6 @@ void loop() {
         Serial.println(index);
 
         if (openGifFilenameByIndex(GIF_DIRECTORY, index) >= 0) {
-            // Can clear screen for new animation here, but this might cause flicker with short animations
-	    // matrix->clear();
-
             decoder.startDecoding();
         } else {
 	    die("FATAL: failed to open file");
@@ -261,6 +401,12 @@ void loop() {
     }
 
     if (clear) screenClearCallback();
+
+    OFFSETX = offsetx_now;
+    OFFSETY = offsety_now;
+    FACTX   = factx_now;
+    FACTY   = facty_now; 
+
     decoder.decodeFrame();
     frame++;
     if (debugframe) {

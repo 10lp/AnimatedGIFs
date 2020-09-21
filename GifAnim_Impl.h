@@ -29,11 +29,16 @@
     #include <stdlib.h>
     #include <dirent.h>
     FILE *file;
+    // This can be used by the caller to retrieve the name by index
+    char pathname[2048];
+
     bool fileSeekCallback(unsigned long position) { return (fseek(file, position, SEEK_SET) != -1); }
     unsigned long filePositionCallback(void) { return ftell(file); }
     int fileReadCallback(void) { return getc(file); }
     int fileReadBlockCallback(void * buffer, int numberOfBytes) { return fread(buffer, 1, numberOfBytes, file); }
 
+    // The functions below belong in FilenameFunctions_Impl.h, but I didn't want
+    // to fill them with linux ifdefs, so I just made separate versions here:
     int enumerateGIFFiles(const char *directoryName, boolean displayFilenames) {
 	int numberOfFiles = 0;
 	Serial.print("Enumerate files in dir ");
@@ -76,7 +81,6 @@
     }
 
     int openGifFilenameByIndex(const char *directoryName, int index) {
-	char pathname[2048];
 	getGIFFilenameByIndex(directoryName, index, pathname);
 	if (file) fclose(file);
 	file = fopen(pathname, "r");
@@ -149,7 +153,7 @@ void drawPixelCallback(int16_t x, int16_t y, uint8_t red, uint8_t green, uint8_t
       matrix->drawPixel(x*1.5+0.5+OFFSETX, y+OFFSETY, color);
       if (x % 2 == 0) matrix->drawPixel(x*1.5+1.5+OFFSETX, y+OFFSETY, color);
   } else {
-      matrix->drawPixel(x+OFFSETX, y+OFFSETY, color);
+      matrix->drawPixel(x*FACTX/10+OFFSETX, y*FACTY/10+OFFSETY, color);
   }
 #else
   backgroundLayer.drawPixel(x, y, {red, green, blue});

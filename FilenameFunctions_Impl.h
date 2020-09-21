@@ -8,6 +8,8 @@
 #include "animatedgif_config.h"
 
 File file;
+// This can be used by the caller to retrieve the name by index
+char pathname[128];
 
 int numberOfFiles;
 
@@ -157,8 +159,6 @@ void getGIFFilenameByIndex(const char *directoryName, int index, char *pnBuffer)
 }
 
 int openGifFilenameByIndex(const char *directoryName, int index) {
-    char pathname[128];
-
     getGIFFilenameByIndex(directoryName, index, pathname);
     
     // Pathname: /gifs/32anim_balls.gif
