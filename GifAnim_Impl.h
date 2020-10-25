@@ -28,6 +28,7 @@
     #include <stdio.h>
     #include <stdlib.h>
     #include <dirent.h>
+    #include <cerrno>
     FILE *file;
     // This can be used by the caller to retrieve the name by index
     char pathname[2048];
@@ -281,6 +282,9 @@ bool sav_newgif(const char *pathname) {
 #endif
     if (!file) {
         Serial.println(": Error opening GIF file");
+#ifdef ARDUINOONPC
+        Serial.println(strerror(errno));
+#endif
 	return 1;
     }
     Serial.print(": Opened GIF file, start decoding (OFFSETX: ");

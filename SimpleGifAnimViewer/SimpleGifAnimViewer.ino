@@ -34,6 +34,7 @@ GifDecoder<kMatrixWidth, kMatrixHeight, 12> decoder;
     // https://www.gnu.org/software/libc/manual/html_node/I_002fO-on-Streams.html
     #include <stdio.h>
     #include <stdlib.h>
+    #include <cerrno>
     FILE *file;
     bool fileSeekCallback(unsigned long position) { return (fseek(file, position, SEEK_SET) != -1); }
     unsigned long filePositionCallback(void) { return ftell(file); }
@@ -90,6 +91,9 @@ void setup() {
 #endif
     if (!file) {
         Serial.println(": Error opening GIF file");
+#ifdef ARDUINOONPC
+        Serial.println(strerror(errno));
+#endif
 	while (1) { delay(1000); }; // while 1 loop only triggers watchdog on ESP chips
     }
     Serial.println(": Opened GIF file, start decoding");
