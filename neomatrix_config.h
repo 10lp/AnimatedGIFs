@@ -726,8 +726,19 @@ uint32_t tft_spi_speed;
     #else
         #undef gif_size
         #define gif_size 192
-	const uint16_t MATRIX_TILE_WIDTH = 128; // width of EACH NEOPIXEL MATRIX (not total display)
-	const uint16_t MATRIX_TILE_HEIGHT= 192; // height of each matrix
+        #ifdef GFXDISPLAY_M384BY256
+            const uint16_t MATRIX_TILE_WIDTH = 384;
+            const uint16_t MATRIX_TILE_HEIGHT= 256;
+        #elif GFXDISPLAY_M192BY160
+            const uint16_t MATRIX_TILE_WIDTH = 192;
+            const uint16_t MATRIX_TILE_HEIGHT= 160;
+        #elif GFXDISPLAY_M128BY192
+            const uint16_t MATRIX_TILE_WIDTH = 128;
+            const uint16_t MATRIX_TILE_HEIGHT= 192;
+        #else
+            const uint16_t MATRIX_TILE_WIDTH = 128;
+            const uint16_t MATRIX_TILE_HEIGHT= 192;
+        #endif
     #endif
     const uint8_t MATRIX_TILE_H     = 1;  // number of matrices arranged horizontally
     const uint8_t MATRIX_TILE_V     = 1;  // number of matrices arranged vertically
@@ -760,12 +771,18 @@ uint32_t tft_spi_speed;
     #define gif_size 192
     
     uint8_t matrix_brightness = 255;
-    #ifdef RPI4
+    #ifdef GFXDISPLAY_M384BY256
         const uint16_t MATRIX_TILE_WIDTH = 384;
         const uint16_t MATRIX_TILE_HEIGHT= 256;
+    #elif GFXDISPLAY_M192BY160
+        const uint16_t MATRIX_TILE_WIDTH = 192;
+        const uint16_t MATRIX_TILE_HEIGHT= 160;
+    #elif GFXDISPLAY_M128BY192
+        const uint16_t MATRIX_TILE_WIDTH = 128;
+        const uint16_t MATRIX_TILE_HEIGHT= 192;
     #else
-	const uint16_t MATRIX_TILE_WIDTH = 192;
-	const uint16_t MATRIX_TILE_HEIGHT= 160;
+        const uint16_t MATRIX_TILE_WIDTH = 128;
+        const uint16_t MATRIX_TILE_HEIGHT= 192;
     #endif
     
     // Used by LEDMatrix
@@ -1034,7 +1051,7 @@ void matrix_setup(bool initserial=true, int reservemem = 40000) {
     
         rgb_matrix::RGBMatrix::Options defaults;
         defaults.hardware_mapping = "regular"; // or e.g. "adafruit-hat"
-	#ifdef RPI4
+        #ifdef GFXDISPLAY_M384BY256
             defaults.rows = 64;
             defaults.cols = 128;
             defaults.chain_length = 4;
@@ -1044,10 +1061,7 @@ void matrix_setup(bool initserial=true, int reservemem = 40000) {
             defaults.led_rgb_sequence = "RBG";
             defaults.panel_type = "FM6126A";
     	    defaults.pixel_mapper_config = "V-mapper";
-        
-            rgb_matrix::RuntimeOptions ropt;
-	    ropt.gpio_slowdown = 2;
-	#else
+        #elif GFXDISPLAY_M192BY160
             defaults.rows = 32;
             defaults.cols = 64;
             defaults.chain_length = 5;
@@ -1057,8 +1071,30 @@ void matrix_setup(bool initserial=true, int reservemem = 40000) {
             //defaults.led_rgb_sequence = "RBG";
             defaults.panel_type = "FM6126A";
             defaults.pixel_mapper_config = "V-mapper:Z";
-    
-            rgb_matrix::RuntimeOptions ropt;
+        #elif GFXDISPLAY_M128BY192
+            defaults.rows = 64;
+            defaults.cols = 128;
+            defaults.chain_length = 1;
+            defaults.parallel = 3;
+            defaults.pwm_lsb_nanoseconds = 100;
+            defaults.pwm_bits = 7;
+            defaults.led_rgb_sequence = "RBG";
+            defaults.panel_type = "FM6126A";
+        #else
+            defaults.rows = 64;
+            defaults.cols = 128;
+            defaults.chain_length = 1;
+            defaults.parallel = 3;
+            defaults.pwm_lsb_nanoseconds = 100;
+            defaults.pwm_bits = 7;
+            defaults.led_rgb_sequence = "RBG";
+            defaults.panel_type = "FM6126A";
+        #endif
+
+        rgb_matrix::RuntimeOptions ropt;
+	#ifdef RPI4
+	    ropt.gpio_slowdown = 2;
+	#else
             ropt.gpio_slowdown = 1;
 	#endif
 
