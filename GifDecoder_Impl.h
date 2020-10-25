@@ -316,7 +316,7 @@ void GifDecoder<maxGifWidth, maxGifHeight, lzwMaxBits>::parseGraphicControlExten
     disposalMethod = (packedBits >> 2) & 7;
     if (disposalMethod > 3) {
         disposalMethod = 0;
-        Serial.println("Invalid disposal value");
+        //Serial.println("Invalid disposal value");
     }
 
     readByte(); // Toss block end
