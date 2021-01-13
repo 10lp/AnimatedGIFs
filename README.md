@@ -11,14 +11,19 @@ Demo on 64x64 SmartMatrix:
 
 Configuration
 -------------
-Please see config.h to select whether you're using SDcard or SPIFFS, and
-NeoMatrix instead of SmartMatrix.  
-For NeoMatrix you must also edit neomatrix_config.h to configure your matrix
-layout, addjust OFFSETX/OFFSETY if needed, as well as matrix_brightness and
-matrix_gamma.
+Please see neomatrix_config.h to select whether you're using SDcard, FatFS, or SPIFFS, and
+NeoMatrix instead of SmartMatrix (or any other display supported by
+https://github.com/marcmerlin/Framebuffer_GFX ). FatFS is the default on ESP32 as it is
+faster than SPIFFS. See http://marc.merlins.org/perso/arduino/post_2019-03-30_Using-FatFS-FFat-on-ESP32-Flash-With-Arduino.html )
 
-neomatrix_config.h contains more configuration related to the NeoMatrix API
-(which can also use SmartMatrix via its API)
+animatedgif_config.h has a few variables specific to this library (while neomatrix_config.h
+is a config file to allow lots of different code for your specific hardware and display).
+
+For historical and compatibility reasons, this library was originally written for Smartmatrix
+(without neomatrix or Framebuffer::GFX support). This is why animatedgif_config.h allows you
+to use SmartMatrix natively without needing Frambuffer::GFX or SmartMatrix::GFX). I however
+recommend you do use those as it will allow you to move your code to any other hardware backend
+from FastLED, to SPI TFTs, to Raspberry Pi with huge RGBPanel displays)
 
 AnimatedGIFs file browser
 -------------------------
