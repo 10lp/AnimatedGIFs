@@ -6,7 +6,11 @@
  * lzwMaxBits can be set to 10 or 11 for small displays, 12 for large displays
  * All 32x32-pixel GIFs tested work with 11, most work with 10
  */
+#ifdef ESP8266
+const int lzwMaxBits = 11;
+#else
 const int lzwMaxBits = 12;
+#endif
 
 //#define NEOMATRIX // Switch to NEOMATRIX backend from native SMARTMATRIX backend
 //#define NEOPIXEL_MATRIX  // If NEOMATRIX, use FastLED::NeoMatrix, not SmartMatrix_GFX
