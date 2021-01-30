@@ -83,6 +83,7 @@ to use, set the define before you include the file.
 #endif
 
 #if defined(ARDUINOONPC)
+    // Those defines (including RPIRGBPANEL) come from makeNativeArduino.mk
     #if defined(RPI4)
 	#pragma message "Detected ARDUINOONPC on rPi4, RPIRGBPANEL defined and will use FastLED_RPIRGBPanel_GFX"
     #elif defined(RPI3)
@@ -173,6 +174,7 @@ uint32_t tft_spi_speed;
 #elif defined(ESP32)
     #define FS_PREFIX ""
     //#include <SPIFFS.h>
+    //#define FSOSPIFFS
     //#define FSO SPIFFS
     #include "FFat.h"
     #define FSO FFat
@@ -186,7 +188,7 @@ uint32_t tft_spi_speed;
 #elif defined(ARDUINOONPC)
     #define UNIXFS
     #define FS_PREFIX "/root/NM/"
-    #define GIF_DIRECTORY FS_PREFIX "gifs"
+    #define GIF_DIRECTORY FS_PREFIX "gifs/"
 #else
     #define FS_PREFIX ""
     #define FSO SD
@@ -404,6 +406,8 @@ uint32_t tft_spi_speed;
     #else // As of 2020/11, SmartMatrix v4 has a new interface
         // https://community.pixelmatix.com/t/smartmatrix-library-4-0-changes-to-matrixhardware-includes/709/9
         #ifdef ESP32
+            // This saves RAM but could make your code unstable if you do Flash + Wifi + PSRAM
+            //#define SMARTMATRIX_USE_PSRAM
             #include <MatrixHardware_ESP32_V0.h> // ESP32
         #elif __IMXRT1062__ // Teensy 4.0/4.1
             #include <MatrixHardware_Teensy4_ShieldV4Adapter.h> // Teensy 4 Adapter attached to SmartLED Shield for Teensy 3 (V4)
@@ -548,25 +552,36 @@ uint32_t tft_spi_speed;
         MATRIX_TILE_H, MATRIX_TILE_V, HORIZONTAL_BLOCKS> ledmatrix(false);
     #endif
     CRGB *matrixleds;
+
+    /*
+    			Arduino	ESP8266		ESP32	ESP32	rPi     rPi
+    						VSPI    HSPI	SPI0    SPI1
+      VCC
+      SCL/SCK/CLK/D0	13	GPIO14/D5	18	14	BC11/22	BC21/40
+      SDA/SDI/MOSI/D1	11	GPIO13/D7	23	13	BC10/19	BC20/38
+      RES/RST		9	GPIO15/D8	26	26	BC24
+      DC/A0/RS (data)	8	GPIO05/D1	25	25	BC23
+      CS		10	GPIO04/D2	27	27	BC08
+    
+      MISO		12	GPIO12/D6	19	12	BM11/23	BC19/35	
+    */
     
     #if defined(__MK66FX1M0__)
-    #define TFT_MISO 12
-    #define TFT_CLK 13
-    #define TFT_MOSI 11
-    #define TFT_DC 10
-    #define TFT_RST 23
-    #define TFT_CS 22
-    
+        #define TFT_RST  23
+        #define TFT_DC   10
+        #define TFT_CS   22 // this can also be wired to ground
+
+        #define TFT_MOSI 11
+        #define TFT_MISO 12
+        #define TFT_CLK  13
     #else
-    // HWSPI default    // sparkfun 18 green 23 blue 19 yellow
-    #define TFT_MISO 19  // yellow
-    #define TFT_MOSI 23  // blue
-    #define TFT_CLK 18   // green
-    #define TFT_DC 27
-    // this is the TFT reset pin. It seems required on my board
-    #define TFT_RST 26
-    #define TFT_CS 25
-    
+        #define TFT_RST  26
+        #define TFT_DC   25
+        #define TFT_CS   27 // this can also be wired to ground
+
+        #define TFT_MOSI 23
+        #define TFT_MISO 19
+        #define TFT_CLK  18
     #endif
     
     //Adafruit_ILI9341 *tft = new Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_CLK, TFT_RST, TFT_MISO);
@@ -610,25 +625,25 @@ uint32_t tft_spi_speed;
       VCC
       SCL/SCK/CLK/D0	13	GPIO14/D5	18	14	BC11/22	BC21/40
       SDA/SDI/MOSI/D1	11	GPIO13/D7	23	13	BC10/19	BC20/38
-      RES/RST		9	GPIO15/D8	26	26	BC24				
-      DC/A0/RS (data)	8	GPIO05/D1	27	27	BC23				
-      CS			10	GPIO04/D2	25	25	BC08			
+      RES/RST		9	GPIO15/D8	26	26	BC24
+      DC/A0/RS (data)	8	GPIO05/D1	25	25	BC23
+      CS		10	GPIO04/D2	27	27	BC08
     
-      MISO			12	GPIO12/D6	19	12	BM11/23	BC19/35	
+      MISO		12	GPIO12/D6	19	12	BM11/23	BC19/35	
     */
     
     #ifdef ESP32
-    #define TFT_CS        25
     #define TFT_RST       26
-    #define TFT_DC        27
+    #define TFT_DC        25
+    #define TFT_CS        27 // this can also be wired to ground
     #elif defined(ESP8266)
-    #define TFT_CS         4
     #define TFT_RST       15
     #define TFT_DC         5
+    #define TFT_CS         4 // this can also be wired to ground
     #else
-    #define TFT_CS        10
     #define TFT_RST        9 // Or set to -1 and connect to Arduino RESET pin
     #define TFT_DC         8
+    #define TFT_CS        10 // this can also be wired to ground
     #endif
     Adafruit_ST7735 *tft = new Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
     
@@ -667,43 +682,43 @@ uint32_t tft_spi_speed;
     
     /*  https://pinout.xyz/pinout/spi
     SD1331 Pin	    Arduino	ESP8266		ESP32	ESP32	rPi     rPi
-    1 GND                                           VSPI    HSPI	SPI0    SPI1
+    1 GND                                       VSPI    HSPI	SPI0    SPI1
     2 VCC
     3 SCL/SCK/CLK/D0	13	GPIO14/D5	18	14	BC11/22	BC21/40
     4 SDA/SDI/MOSI/D1	11	GPIO13/D7	23	13	BC10/19	BC20/38
     5 RES/RST		9	GPIO15/D8	26	26	BC24				
-    6 DC/A0/RS (data)	8	GPIO05/D1	27	27	BC23				
-    7 CS			10	GPIO04/D2	25	25	BC08			
+    6 DC/A0/RS (data)	8	GPIO05/D1	25	25	BC23				
+    7 CS		10	GPIO04/D2	27	27	BC08			
     
-      MISO			12	GPIO12/D6	19	12	BM11/23	BC19/35	
+      MISO		12	GPIO12/D6	19	12	BM11/23	BC19/35	
     */
     
     #ifdef ESP32
-    #define sclk 18
-    #define mosi 23
-    #define rst  26
-    #define dc   27
-    #define cs   25
-    // Option 1: use any pins but a little slower
-    //#pragma message "Using SWSPI"
-    Adafruit_SSD1331 *tft  = new Adafruit_SSD1331(cs, dc, mosi, sclk, rst);
-    // This hangs the moment it is run
-    // https://github.com/adafruit/Adafruit-SSD1331-OLED-Driver-Library-for-Arduino/issues/27
-    //Adafruit_SSD1331 *tft  = new Adafruit_SSD1331(cs, dc, rst);
+        #define TFT_RST  26
+        #define TFT_DC   25
+        #define TFT_CS   27 // this can also be wired to ground
+
+        #define TFT_MOSI 23
+        #define TFT_MISO 19
+        #define TFT_CLK  18
+        // Option 1: use any pins but a little slower
+        #pragma message "Using SWSPI"
+        Adafruit_SSD1331 *tft  = new Adafruit_SSD1331(TFT_CS, TFT_DC, TFT_MOSI, TFT_CLK, TFT_RST);
+        // HWSPI hangs on ESP32 the moment it is run
+        // https://github.com/adafruit/Adafruit-SSD1331-OLED-Driver-Library-for-Arduino/issues/27
+        //Adafruit_SSD1331 *tft  = new Adafruit_SSD1331(TFT_CS, TFT_DC, TFT_RST);
     #else
-    // You can use any (4 or) 5 pins
-    // hwspi hardcodes those pins, no need to redefine them
-    #define sclk 14
-    #define mosi 13
-    #define rst  15
-    #define cs   4
-    #define dc   5
-    // Option 2: must use the hardware SPI pins
-    // (for UNO thats sclk = 13 and sid = 11) and pin 10 must be
-    // an output. This is much faster - also required if you want
-    // to use the microSD card (see the image drawing example)
-    #pragma message "Using HWSPI"
-    Adafruit_SSD1331 *tft = new Adafruit_SSD1331(&SPI, cs, dc, rst);
+        // Teensy Pins?
+        #define TFT_RST  15
+        #define TFT_DC   5
+        #define TFT_CS   4
+
+        // You can use any (4 or) 5 pins
+        // hwspi hardcodes those pins, no need to redefine them
+        #define TFT_MOSI 13
+        #define TFT_CLK  14
+        #pragma message "Using HWSPI"
+        Adafruit_SSD1331 *tft = new Adafruit_SSD1331(&SPI, TFT_CS, TFT_DC, TFT_RST);
     #endif
     
     #if SSD1331_ROTATE == 0
@@ -787,7 +802,7 @@ uint32_t tft_spi_speed;
     CRGB *matrixleds;
     #ifdef LEDMATRIX
     // cLEDMatrix defines
-    cLEDMatrix<MATRIX_TILE_WIDTH, MATRIX_TILE_HEIGHT, HORIZONTAL_MATRIX,
+    cLEDMatrix<MATRIX_TILE_WIDTH, -MATRIX_TILE_HEIGHT, HORIZONTAL_MATRIX,
         MATRIX_TILE_H, MATRIX_TILE_V, HORIZONTAL_BLOCKS> ledmatrix(false);
     #endif
     FastLED_NeoMatrix *matrix = new FastLED_NeoMatrix(matrixleds, MATRIX_TILE_WIDTH, MATRIX_TILE_HEIGHT,
@@ -1128,11 +1143,15 @@ void matrix_setup(bool initserial=true, int reservemem = 40000) {
             defaults.cols = 128;
             defaults.chain_length = 1;
             defaults.parallel = 3;
-            defaults.pwm_lsb_nanoseconds = 100;
+	    // 100->50: 180Hz to 333Hz refresh
+            defaults.pwm_lsb_nanoseconds = 50;
             defaults.pwm_bits = 7;
 	    // Time dithering of lower bits
 	    // 2 changes speed from 400Hz (from 160Hz)
-            defaults.pwm_dither_bits = 2;
+	    // or 520Hz with lsb_ns at 50 not 100
+	    // but things are 1/3rd as bright so
+	    // we go back to 0 for 333Hz with 50ns
+            defaults.pwm_dither_bits = 0;
             defaults.led_rgb_sequence = "RBG";
             defaults.panel_type = "FM6126A";
         #else
@@ -1154,10 +1173,10 @@ void matrix_setup(bool initserial=true, int reservemem = 40000) {
             ropt.gpio_slowdown = 1;
 	#endif
 
-        rgb_matrix::Canvas *canvas = rgb_matrix::CreateMatrixFromOptions(defaults, ropt);
-        while (canvas == NULL) Serial.println("Canvas did not initialize");
-        matrix->setCanvas(canvas);
-        Serial.println("RGBPanel Canvas initialized");
+        RGBMatrix *rgbmatrix = rgb_matrix::CreateMatrixFromOptions(defaults, ropt);
+        while (rgbmatrix == NULL) Serial.println("RGBMatrix did not initialize");
+        matrix->setMatrix(rgbmatrix);
+        Serial.println("RGBPanel RGBMatrix initialized");
     
     //============================================================================================
     #elif defined(M5STACK)
@@ -1252,7 +1271,7 @@ void matrix_setup(bool initserial=true, int reservemem = 40000) {
     #if defined(SMARTMATRIX)
         matrixLayer.setBrightness(matrix_brightness);
     #else
-        FastLED.setBrightness(matrix_brightness);
+        matrix->setBrightness(matrix_brightness);
     #endif
     Serial.print("Gamma Correction: ");
     Serial.println(matrix_gamma);
