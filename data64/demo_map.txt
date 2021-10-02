@@ -302,6 +302,3 @@
 0 0 0 0 0 297 297
 0 0 0 0 0 298 298
 0 0 0 0 0 299 299
-# shared by 32, 96 and 192, but anything over 32 is offset by 20
-# 160 is mapped to 180 for lower res and 240 for 192 height
-# shared by 96 and 192, offset by 20
