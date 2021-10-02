@@ -249,7 +249,9 @@ void sav_setup() {
 	    Serial.print(file.name());
 	    Serial.print(" Size: ");
 	    Serial.println(file.size());
+	    close(file);
 	}
+	close(dir);
     #endif // ESP8266
     Serial.println();
 #else

@@ -8,7 +8,7 @@ img12.ffat: data/* data/gifs64/* data/www/*
 	# ffat.csv 0xBEF000 is 12220KB
 	fatfsimage img12.ffat 12220 data/
 
-flash: flash3
+flash: flash12
 
 flash3: img3.ffat
 	# IF you aren't using a 1/3GB split, 0x110000 will need to be updated
