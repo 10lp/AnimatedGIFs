@@ -276,8 +276,8 @@ bool sav_newgif(const char *pathname) {
     file = fopen(pathname, "r");
 #else
     if (file) file.close();
-    #ifdef FSOSPIFFS
-	file = SPIFFS.open(pathname, "r");
+    #ifndef FSOFATFS
+	file = FSO.open(pathname, "r");
     #else
 	file = FFat.open(pathname);
     #endif

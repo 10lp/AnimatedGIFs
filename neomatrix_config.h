@@ -161,13 +161,6 @@ uint32_t tft_spi_speed;
 // here (NeoMatrix-FastLED-IR actually also uses this to read a config file)
 //============================================================================
 
-// control if we decode in 32x32 or 64x64, or something else
-#ifdef ESP8266
-#define gif_size 32
-#else
-#define gif_size 64
-#endif
-
 // Note, you can use an sdcard on ESP32 or ESP8266 if you really want,
 // but if your data fits in built in flash, why not use it?
 // Use built in flash via SPIFFS/FATFS
