@@ -994,7 +994,6 @@ uint32_t tft_spi_speed;
     #define min(a,b) ((a<b)?(a):(b))
     #define max(a,b) ((a>b)?(a):(b))
     #include <led-matrix.h>
-    #undef gif_size
     #define gif_size 192
 
     uint8_t matrix_brightness = 255;
