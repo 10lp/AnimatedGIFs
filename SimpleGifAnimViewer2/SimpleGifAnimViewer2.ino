@@ -1,3 +1,4 @@
+#define FRAMEBUFFER
 #ifndef ARDUINOONPC
 #define BASICARDUINOFS
 #endif
@@ -15,14 +16,15 @@ int FACTY = 10;
 
 // Setup method runs once, when the sketch starts
 void setup() {
+    // Why can I not use/see gif_size here?
     #if defined(ARDUINOONPC)
-	const char *pathname = FS_PREFIX "/gifs128x192/abstract_colorful.gif";
+      const char *pathname = FS_PREFIX "/gifs128x192/abstract_colorful.gif";
     #elif defined(ESP8266)
-	// 32x32 GIFs on 24x32 display, hence offset of -4
-	OFFSETX = -4;
-	const char *pathname = "/gifs/concentric_circles.gif";
+      // 32x32 GIFs on 24x32 display, hence offset of -4
+      OFFSETX = -4;
+      const char *pathname = "/gifs/concentric_circles.gif";
     #else
-	const char *pathname = "/gifs64/200_circlesmoke.gif";
+      const char *pathname = "/gifs64/200_circlesmoke.gif";
     #endif
     sav_setup();
     if (sav_newgif(pathname)) delay(100000); // while 1 loop only triggers watchdog on ESP chips
