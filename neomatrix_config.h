@@ -178,19 +178,17 @@ uint32_t tft_spi_speed;
 // ESP32: https://github.com/me-no-dev/arduino-esp32fs-plugin
 // https://github.com/marcmerlin/esp32_fatfsimage/blob/master/README.md
 #if defined(ESP8266)
+    #define gif_size 32
     #define FS_PREFIX ""
     #include <FS.h>
     #define FSO SPIFFS
     #define FSOSPIFFS
-    #if gif_size == 64
-        #define GIF_DIRECTORY FS_PREFIX "/gifs64/"
-    #else
-        #define GIF_DIRECTORY FS_PREFIX "/gifs/"
-    #endif
+    #define GIF_DIRECTORY FS_PREFIX "/gifs/"
     extern "C" {
         #include "user_interface.h"
     }
 #elif defined(ESP32)
+    #define gif_size 64
     #define FS_PREFIX ""
     //#define ESP32LITTLEFS
     #define ESP32FATFS
