@@ -235,15 +235,23 @@ void sav_setup() {
 	    Serial.printf("FS File: %s, size: %s\n", fileName.c_str(), String(fileSize).c_str());
 	}
     #else
+	File dir;
         #if defined(FSOFAT)
             Serial.printf("Total space: %10u\n", FFat.totalBytes());
             Serial.printf("Free space:  %10u\n", FFat.freeBytes());
-            File dir = FFat.open(GIF_DIRECTORY);
+            dir = FFat.open(GIF_DIRECTORY);
             if (!dir) die("Can't open  " GIF_DIRECTORY);
             if (!dir.isDirectory()) die( GIF_DIRECTORY ": not a directory");
-        #else
-	    File dir = FSO.open("/");
+	    while (File file = dir.openNextFile()) {
+		Serial.print("FS File: ");
+		Serial.print(file.name());
+		Serial.print(" Size: ");
+		Serial.println(file.size());
+		close(file);
+	    }
+	    close(dir);
         #endif
+	dir = FSO.open("/");
 	while (File file = dir.openNextFile()) {
 	    Serial.print("FS File: ");
 	    Serial.print(file.name());
@@ -275,12 +283,17 @@ bool sav_newgif(const char *pathname) {
     if (file) fclose(file);
     file = fopen(pathname, "r");
 #else
-    if (file) file.close();
-    #ifndef FSOFATFS
-	file = FSO.open(pathname, "r");
-    #else
-	file = FFat.open(pathname);
+    if (file) {
+	Serial.print(" (closing previous) ");
+	file.close();
+    }
+    Serial.print(" FSO open ");
+    file = FSO.open(pathname 
+    // FIXME: should this say ESP8266 instead?
+    #ifdef FSOSPIFFS
+			     , "r"
     #endif
+				   );
 #endif
     if (!file) {
         Serial.println(": Error opening GIF file");
